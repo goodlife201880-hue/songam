@@ -1,0 +1,11 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {exportPrice,exportTotals} from '../shared/export-price.mjs';
+const foods=[{id:1,name:'Beef food',serving_price:'12.5',currency:'USD'},{id:2,name:'Soup',serving_price:'3',currency:'USD'}];
+const goods=[{id:1,name:'Juice',category_id:1,unit:'L',unit_cost:'8',currency:'KRW'}];
+const food={type:'food',item_id:1,quantity:'2',unit:'serving'};
+const good={type:'goods',item_id:1,category_id:1,quantity:'250',unit:'ml'};
+test('food export sums multiple serving prices without trusting submitted prices',()=>{const rows=[exportPrice({...food,total_price:'1',unit_price:'1'},foods,goods),exportPrice({...food,item_id:2,quantity:'3'},foods,goods)];assert.deepEqual(exportTotals(rows),[{currency:'USD',total_price:'34.000'}]);});
+test('goods export calculates from saved cost with compatible unit conversion',()=>{const row=exportPrice(good,foods,goods);assert.equal(row.total_price,'2.000');assert.equal(row.currency,'KRW');assert.equal(row.unit_price,'8');});
+test('totals do not mix USD with KRW',()=>{assert.deepEqual(exportTotals([exportPrice(food,foods,goods),exportPrice(good,foods,goods)]),[{currency:'USD',total_price:'25.000'},{currency:'KRW',total_price:'2.000'}]);});
+test('exports reject invalid items, fractional servings and incompatible units',()=>{for(const row of [{...food,item_id:99},{...food,quantity:'0'},{...food,quantity:'1.5'},{...good,unit:'kg'},{...good,category_id:99},null])assert.throws(()=>exportPrice(row,foods,goods),{status:400});});

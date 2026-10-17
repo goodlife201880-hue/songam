@@ -1,0 +1,9 @@
+﻿export function bad(message,status=400){throw Object.assign(new Error(message),{status});}
+export function name(value){if(typeof value!=='string' || !value.trim() || value.trim().length>120)bad('Name must contain 1-120 characters.');return value.trim();}
+export function id(value){if(!/^\d+$/.test(String(value)) || !Number.isSafeInteger(Number(value)) || Number(value)<1)bad('Invalid record ID.');return Number(value);}
+export const units=['kg','g','L','ml','piece'];
+export function decimal(value,positive=false){const s=String(value);if(!/^\d{1,8}(\.\d{1,3})?$/.test(s) || (positive && Number(s)<=0))bad(positive?'Quantity must be positive, with at most 3 decimal places.':'Cost must be zero or positive, with at most 3 decimal places.');return s;}
+export function date(value){if(typeof value!=='string' || !/^\d{4}-\d{2}-\d{2}$/.test(value) || value<'1000-01-01' || value>'9998-12-31' || !Number.isFinite(Date.parse(value)) || new Date(value).toISOString().slice(0,10)!==value)bad('Enter a valid date.');return value;}
+export function periodRange(period,selected){date(selected);const [y,m,d]=selected.split('-').map(Number);let start,end;if(period==='day'){start=selected;end=new Date(Date.UTC(y,m-1,d+1));}else if(period==='month'){start=`${y}-${String(m).padStart(2,'0')}-01`;end=new Date(Date.UTC(y,m,1));}else if(period==='year'){start=`${y}-01-01`;end=new Date(Date.UTC(y+1,0,1));}else bad('Choose day, month, or year.');return {start,end:end.toISOString().slice(0,10)};}
+
+export function currency(value){if(!['USD','KRW'].includes(value))bad('Choose Dollar or Won.');return value;}
